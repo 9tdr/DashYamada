@@ -134,12 +134,12 @@
 </div>
 
 <script>
-  // 🔗 วางลิงก์ Google Apps Script ตัวเดิมลงไปในช่องนี้ได้เลยครับ (ตัวเดียวกับที่ใช้ในแอปหน้าบันทึก)
+  // 🔗 URL ถูกต้องเรียบร้อยครับ
   const scriptURL = "https://script.google.com/macros/s/AKfycbzyW5hkrhy46WWPQwTi9xt20zd8QGxOQe9pHWrGLNkgSnbao5pcwld03k5J49SU3kaj/exec";
 
   async function callAPI(action, data={}) {
     const response = await fetch(scriptURL, {
-      method: "POST",https://script.google.com/macros/s/AKfycbzyW5hkrhy46WWPQwTi9xt20zd8QGxOQe9pHWrGLNkgSnbao5pcwld03k5J49SU3kaj/exec
+      method: "POST",
       body: JSON.stringify({ action, data })
     });
     return await response.json();
