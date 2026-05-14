@@ -135,11 +135,11 @@
 
 <script>
   // 🔗 วางลิงก์ Google Apps Script ตัวเดิมลงไปในช่องนี้ได้เลยครับ (ตัวเดียวกับที่ใช้ในแอปหน้าบันทึก)
-  const scriptURL = "วาง_URL_ของ_GOOGLE_APPS_SCRIPT_ที่นี่";
+  const scriptURL = "";
 
   async function callAPI(action, data={}) {
     const response = await fetch(scriptURL, {
-      method: "POST",
+      method: "POST",https://script.google.com/macros/s/AKfycbzyW5hkrhy46WWPQwTi9xt20zd8QGxOQe9pHWrGLNkgSnbao5pcwld03k5J49SU3kaj/exec
       body: JSON.stringify({ action, data })
     });
     return await response.json();
