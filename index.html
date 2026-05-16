@@ -40,7 +40,6 @@
       margin-left: 8px;
     }
 
-    /* ช่องค้นหา */
     .search-box {
       background-color: #1a1b21;
       border: 1px solid #3a3b40;
@@ -59,7 +58,6 @@
       border-color: #f9ab00;
       box-shadow: none;
     }
-    /* เปลี่ยนสีไอคอนปฏิทินให้มองเห็นใน Dark Mode */
     ::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; }
     
     .card-dark {
@@ -98,7 +96,6 @@
     </div>
   </div>
 
-  <!-- กล่องระบบค้นหา -->
   <div class="search-box">
     <div class="row g-2 align-items-center">
       <div class="col-4">
@@ -151,19 +148,19 @@
 
       <div class="col-6">
         <div class="card-dark">
-          <div class="card-title-sm">สัดส่วนที่ค้นหา (คน/รถ)</div>
-          <div id="ratio-val" class="text-white-val">0.0</div>
-          <div class="unit-text">เฉลี่ยคนต่อรถ 1 คัน</div>
+          <div class="card-title-sm">ยอดคนรวมทั้งระบบ (All Time)</div>
+          <div id="total-people-system" class="text-white-val">0</div>
+          <div class="unit-text">คน</div>
         </div>
       </div>
     </div>
 
     <div class="chart-container">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="fw-bold" style="color: #e8eaed;">กราฟแนวโน้ม (Trend)</div>
-        <div class="small" style="color: #8ab4f8;" id="chart-subtitle">ปริมาณรถรายช่วงเวลา</div>
+        <div class="fw-bold" style="color: #e8eaed;">กราฟเปรียบเทียบ (รถ/คน)</div>
+        <div class="small" style="color: #8ab4f8;" id="chart-subtitle">ข้อมูลแบบ รายวัน</div>
       </div>
-      <canvas id="trendChart" height="200"></canvas>
+      <canvas id="trendChart" height="220"></canvas>
     </div>
   </div>
 
@@ -181,7 +178,6 @@
     return await response.json();
   }
 
-  // จัดการซ่อน/โชว์ ช่องกรอกข้อมูล
   function toggleInput() {
     const type = document.getElementById('filterType').value;
     document.getElementById('inputDaily').style.display = type === 'daily' ? 'block' : 'none';
@@ -190,7 +186,6 @@
     document.getElementById('inputAll').style.display = type === 'all' ? 'block' : 'none';
   }
 
-  // คำนวณวันที่จากรูปแบบ Week (เช่น 2026-W20) เป็น จันทร์-อาทิตย์
   function getDatesFromWeek(weekStr) {
     const [year, week] = weekStr.split('-W');
     const simple = new Date(year, 0, 1 + (week - 1) * 7);
@@ -238,18 +233,16 @@
     try {
       const result = await callAPI("searchData", { type, startDate, endDate });
       
-      // อัปเดต Title การ์ดตามเงื่อนไขที่หา
       document.getElementById('title-car-search').innerText = `ยอดรถ (${labelTitle})`;
       document.getElementById('title-people-search').innerText = `ยอดคน (${labelTitle})`;
       document.getElementById('chart-subtitle').innerText = `ข้อมูลแบบ ${labelTitle}`;
 
-      // อัปเดตตัวเลข
       document.getElementById('search-cars').innerText = result.searchCars.toLocaleString();
       document.getElementById('search-people').innerText = result.searchPeople.toLocaleString();
       document.getElementById('total-cars-system').innerText = result.totalSystemCars.toLocaleString();
       
-      let ratio = result.searchCars > 0 ? (result.searchPeople / result.searchCars).toFixed(1) : "0.0";
-      document.getElementById('ratio-val').innerText = ratio;
+      // ดึงยอดคนรวมมาแสดงใน Card 4 แทนอัตราส่วน
+      document.getElementById('total-people-system').innerText = result.totalSystemPeople.toLocaleString();
 
       renderChart(result.chartData);
 
@@ -263,35 +256,45 @@
     }
   }
 
+  // เปลี่ยนการสร้างกราฟเป็น Bar Chart (เปรียบเทียบ รถ และ คน)
   function renderChart(chartData) {
     const ctx = document.getElementById('trendChart').getContext('2d');
-    if (myChart) myChart.destroy(); // เคลียร์กราฟเก่าทิ้งก่อนวาดใหม่
+    if (myChart) myChart.destroy();
 
     const labels = Object.keys(chartData);
     const dataCars = labels.map(key => chartData[key].cars);
+    const dataPeople = labels.map(key => chartData[key].people);
 
     myChart = new Chart(ctx, {
-      type: 'line',
+      type: 'bar', // เปลี่ยนเป็นกราฟแท่ง
       data: {
         labels: labels,
-        datasets: [{
-          label: 'รถ (คัน)',
-          data: dataCars,
-          borderColor: '#f9ab00',
-          backgroundColor: 'rgba(249, 171, 0, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.3,
-          pointBackgroundColor: '#1a1b21',
-          pointBorderColor: '#f9ab00',
-          pointBorderWidth: 2,
-          pointRadius: 4
-        }]
+        datasets: [
+          {
+            label: 'รถ (คัน)',
+            data: dataCars,
+            backgroundColor: 'rgba(249, 171, 0, 0.85)', // สีเหลือง
+            borderColor: '#f9ab00',
+            borderWidth: 1,
+            borderRadius: 4
+          },
+          {
+            label: 'คน (คน)',
+            data: dataPeople,
+            backgroundColor: 'rgba(232, 234, 237, 0.85)', // สีขาว/เทา
+            borderColor: '#e8eaed',
+            borderWidth: 1,
+            borderRadius: 4
+          }
+        ]
       },
       options: {
         responsive: true,
         plugins: {
-          legend: { display: false },
+          legend: { 
+            display: true, // เปิดแสดง Legend ให้รู้ว่าแท่งไหนคืออะไร
+            labels: { color: '#9aa0a6' }
+          },
           tooltip: { mode: 'index', intersect: false }
         },
         scales: {
@@ -310,7 +313,6 @@
     });
   }
 
-  // เซ็ตค่าเริ่มต้นเป็นวันที่ปัจจุบัน แล้วกดค้นหาออโต้ตอนเปิดแอป
   window.onload = () => {
     const now = new Date();
     const yyyy = now.getFullYear();
