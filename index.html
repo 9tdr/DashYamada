@@ -13,7 +13,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    /* ตั้งค่าธีม Dark Mode */
     body { 
       background-color: #121317; 
       color: #9aa0a6; 
@@ -24,13 +23,12 @@
     
     .container-app { max-width: 600px; margin: auto; padding: 15px; }
     
-    /* กล่อง Header */
     .header-box {
       background-color: #1a1b21;
       border: 1px solid #3a3b40;
       border-radius: 12px;
       padding: 15px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
     .status-badge {
       background-color: #3c4043;
@@ -41,8 +39,29 @@
       font-weight: 600;
       margin-left: 8px;
     }
+
+    /* ช่องค้นหา */
+    .search-box {
+      background-color: #1a1b21;
+      border: 1px solid #3a3b40;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .form-control-dark, .form-select-dark {
+      background-color: #121317;
+      border: 1px solid #3a3b40;
+      color: #e8eaed;
+    }
+    .form-control-dark:focus, .form-select-dark:focus {
+      background-color: #121317;
+      color: #e8eaed;
+      border-color: #f9ab00;
+      box-shadow: none;
+    }
+    /* เปลี่ยนสีไอคอนปฏิทินให้มองเห็นใน Dark Mode */
+    ::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; }
     
-    /* กล่องข้อมูล (Cards) */
     .card-dark {
       background-color: #1a1b21;
       border: 1px solid #2a2b30;
@@ -53,12 +72,10 @@
     .card-title-sm { font-size: 0.85rem; color: #9aa0a6; margin-bottom: 8px; }
     .unit-text { font-size: 0.8rem; color: #5f6368; margin-top: 5px; }
     
-    /* สีตัวเลข */
     .text-red { color: #f25555; font-size: 2.2rem; font-weight: 700; line-height: 1; }
     .text-yellow { color: #f9ab00; font-size: 2.2rem; font-weight: 700; line-height: 1; }
     .text-white-val { color: #e8eaed; font-size: 1.8rem; font-weight: 700; line-height: 1; }
     
-    /* ส่วนของกราฟ */
     .chart-container {
       background-color: #1a1b21;
       border: 1px solid #2a2b30;
@@ -79,9 +96,28 @@
       <h5 class="mb-0 fw-bold text-warning">รายงาน Yamada</h5>
       <span class="status-badge">Real-time</span>
     </div>
-    <div class="small">
-      <div style="color: #f9ab00;">! ข้อมูลดึงตรงจากระบบฐานข้อมูล</div>
-      <div style="color: #f9ab00;">! อัปเดตยอดอัตโนมัติ</div>
+  </div>
+
+  <!-- กล่องระบบค้นหา -->
+  <div class="search-box">
+    <div class="row g-2 align-items-center">
+      <div class="col-4">
+        <select id="filterType" class="form-select form-select-dark text-sm" onchange="toggleInput()">
+          <option value="daily">รายวัน</option>
+          <option value="weekly">รายสัปดาห์</option>
+          <option value="monthly">รายเดือน</option>
+          <option value="all">ดูทั้งหมด</option>
+        </select>
+      </div>
+      <div class="col-5">
+        <input type="date" id="inputDaily" class="form-control form-control-dark">
+        <input type="week" id="inputWeekly" class="form-control form-control-dark" style="display:none;">
+        <input type="month" id="inputMonthly" class="form-control form-control-dark" style="display:none;">
+        <input type="text" id="inputAll" class="form-control form-control-dark text-center" value="ทุกช่วงเวลา" disabled style="display:none;">
+      </div>
+      <div class="col-3">
+        <button class="btn btn-warning w-100 fw-bold" onclick="executeSearch()">ค้นหา</button>
+      </div>
     </div>
   </div>
 
@@ -91,31 +127,31 @@
     <div class="row g-3">
       <div class="col-6">
         <div class="card-dark">
-          <div class="card-title-sm">ยอดรถรายวันล่าสุด</div>
-          <div id="today-cars" class="text-red">0</div>
+          <div class="card-title-sm" id="title-car-search">ยอดรถ (รายวัน)</div>
+          <div id="search-cars" class="text-red">0</div>
           <div class="unit-text">คัน</div>
         </div>
       </div>
       
       <div class="col-6">
         <div class="card-dark">
-          <div class="card-title-sm">ยอดรถรวมสะสมทั้งหมด</div>
-          <div id="total-cars" class="text-yellow">0</div>
-          <div class="unit-text">คัน</div>
-        </div>
-      </div>
-
-      <div class="col-6">
-        <div class="card-dark">
-          <div class="card-title-sm">ยอดคนรายวันล่าสุด</div>
-          <div id="today-people" class="text-white-val">0</div>
+          <div class="card-title-sm" id="title-people-search">ยอดคน (รายวัน)</div>
+          <div id="search-people" class="text-white-val">0</div>
           <div class="unit-text">คน</div>
         </div>
       </div>
 
       <div class="col-6">
         <div class="card-dark">
-          <div class="card-title-sm">สัดส่วน (คน/รถ) สะสม</div>
+          <div class="card-title-sm">ยอดรถรวมทั้งระบบ (All Time)</div>
+          <div id="total-cars-system" class="text-yellow">0</div>
+          <div class="unit-text">คัน</div>
+        </div>
+      </div>
+
+      <div class="col-6">
+        <div class="card-dark">
+          <div class="card-title-sm">สัดส่วนที่ค้นหา (คน/รถ)</div>
           <div id="ratio-val" class="text-white-val">0.0</div>
           <div class="unit-text">เฉลี่ยคนต่อรถ 1 คัน</div>
         </div>
@@ -125,7 +161,7 @@
     <div class="chart-container">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="fw-bold" style="color: #e8eaed;">กราฟแนวโน้ม (Trend)</div>
-        <div class="small" style="color: #8ab4f8;">ปริมาณรถรายเดือน</div>
+        <div class="small" style="color: #8ab4f8;" id="chart-subtitle">ปริมาณรถรายช่วงเวลา</div>
       </div>
       <canvas id="trendChart" height="200"></canvas>
     </div>
@@ -134,8 +170,8 @@
 </div>
 
 <script>
-  // 🔗 URL ถูกต้องเรียบร้อยครับ
   const scriptURL = "https://script.google.com/macros/s/AKfycbzyW5hkrhy46WWPQwTi9xt20zd8QGxOQe9pHWrGLNkgSnbao5pcwld03k5J49SU3kaj/exec";
+  let myChart = null;
 
   async function callAPI(action, data={}) {
     const response = await fetch(scriptURL, {
@@ -145,35 +181,78 @@
     return await response.json();
   }
 
-  async function loadDashboard() {
+  // จัดการซ่อน/โชว์ ช่องกรอกข้อมูล
+  function toggleInput() {
+    const type = document.getElementById('filterType').value;
+    document.getElementById('inputDaily').style.display = type === 'daily' ? 'block' : 'none';
+    document.getElementById('inputWeekly').style.display = type === 'weekly' ? 'block' : 'none';
+    document.getElementById('inputMonthly').style.display = type === 'monthly' ? 'block' : 'none';
+    document.getElementById('inputAll').style.display = type === 'all' ? 'block' : 'none';
+  }
+
+  // คำนวณวันที่จากรูปแบบ Week (เช่น 2026-W20) เป็น จันทร์-อาทิตย์
+  function getDatesFromWeek(weekStr) {
+    const [year, week] = weekStr.split('-W');
+    const simple = new Date(year, 0, 1 + (week - 1) * 7);
+    const dow = simple.getDay();
+    const isoStart = simple;
+    if (dow <= 4) isoStart.setDate(simple.getDate() - simple.getDay() + 1);
+    else isoStart.setDate(simple.getDate() + 8 - simple.getDay());
+    const end = new Date(isoStart);
+    end.setDate(isoStart.getDate() + 6);
+    return { start: isoStart, end: end };
+  }
+
+  async function executeSearch() {
+    const type = document.getElementById('filterType').value;
+    let startDate, endDate, labelTitle;
+
+    if (type === 'daily') {
+      const val = document.getElementById('inputDaily').value;
+      if(!val) return alert("กรุณาเลือกวันที่");
+      startDate = val;
+      endDate = val;
+      labelTitle = "รายวัน";
+    } else if (type === 'weekly') {
+      const val = document.getElementById('inputWeekly').value;
+      if(!val) return alert("กรุณาเลือกสัปดาห์");
+      const dates = getDatesFromWeek(val);
+      startDate = dates.start.toISOString().split('T')[0];
+      endDate = dates.end.toISOString().split('T')[0];
+      labelTitle = "รายสัปดาห์";
+    } else if (type === 'monthly') {
+      const val = document.getElementById('inputMonthly').value;
+      if(!val) return alert("กรุณาเลือกเดือน");
+      const [year, month] = val.split('-');
+      startDate = `${year}-${month}-01`;
+      const lastDay = new Date(year, month, 0).getDate();
+      endDate = `${year}-${month}-${lastDay}`;
+      labelTitle = "รายเดือน";
+    } else if (type === 'all') {
+      labelTitle = "ทั้งหมด";
+    }
+
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('dashboard-content').style.display = 'none';
+
     try {
-      // ดึงข้อมูล 2 ส่วนพร้อมกันเพื่อความรวดเร็ว
-      const [todayData, analyticsData] = await Promise.all([
-        callAPI("getSummary"),
-        callAPI("getAnalytics")
-      ]);
-
-      // คำนวณยอดของวันนี้
-      let todayCars = 0;
-      let todayPeople = 0;
-      todayData.forEach(row => {
-        todayCars += row.cars;
-        todayPeople += row.people;
-      });
-
-      // อัปเดตตัวเลขขึ้นหน้าจอ
-      document.getElementById('today-cars').innerText = todayCars.toLocaleString();
-      document.getElementById('total-cars').innerText = analyticsData.totalCars.toLocaleString();
-      document.getElementById('today-people').innerText = todayPeople.toLocaleString();
+      const result = await callAPI("searchData", { type, startDate, endDate });
       
-      // คำนวณสัดส่วน
-      let ratio = analyticsData.totalCars > 0 ? (analyticsData.totalPeople / analyticsData.totalCars).toFixed(1) : "0.0";
+      // อัปเดต Title การ์ดตามเงื่อนไขที่หา
+      document.getElementById('title-car-search').innerText = `ยอดรถ (${labelTitle})`;
+      document.getElementById('title-people-search').innerText = `ยอดคน (${labelTitle})`;
+      document.getElementById('chart-subtitle').innerText = `ข้อมูลแบบ ${labelTitle}`;
+
+      // อัปเดตตัวเลข
+      document.getElementById('search-cars').innerText = result.searchCars.toLocaleString();
+      document.getElementById('search-people').innerText = result.searchPeople.toLocaleString();
+      document.getElementById('total-cars-system').innerText = result.totalSystemCars.toLocaleString();
+      
+      let ratio = result.searchCars > 0 ? (result.searchPeople / result.searchCars).toFixed(1) : "0.0";
       document.getElementById('ratio-val').innerText = ratio;
 
-      // สร้างกราฟ
-      renderChart(analyticsData.monthlyData);
+      renderChart(result.chartData);
 
-      // ปิดข้อความโหลด โชว์แดชบอร์ด
       document.getElementById('loading').style.display = 'none';
       document.getElementById('dashboard-content').style.display = 'block';
 
@@ -184,14 +263,14 @@
     }
   }
 
-  function renderChart(monthlyData) {
+  function renderChart(chartData) {
     const ctx = document.getElementById('trendChart').getContext('2d');
-    
-    // แปลงข้อมูล Object เป็น Array สำหรับกราฟ
-    const labels = Object.keys(monthlyData); // ชื่อเดือน เช่น 5/2569
-    const dataCars = labels.map(key => monthlyData[key].cars);
+    if (myChart) myChart.destroy(); // เคลียร์กราฟเก่าทิ้งก่อนวาดใหม่
 
-    new Chart(ctx, {
+    const labels = Object.keys(chartData);
+    const dataCars = labels.map(key => chartData[key].cars);
+
+    myChart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: labels,
@@ -202,7 +281,7 @@
           backgroundColor: 'rgba(249, 171, 0, 0.1)',
           borderWidth: 2,
           fill: true,
-          tension: 0.3, // ทำให้เส้นโค้งสมูทขึ้น
+          tension: 0.3,
           pointBackgroundColor: '#1a1b21',
           pointBorderColor: '#f9ab00',
           pointBorderWidth: 2,
@@ -231,8 +310,15 @@
     });
   }
 
-  // สั่งโหลดข้อมูลทันทีที่เปิดหน้าเว็บ
-  loadDashboard();
+  // เซ็ตค่าเริ่มต้นเป็นวันที่ปัจจุบัน แล้วกดค้นหาออโต้ตอนเปิดแอป
+  window.onload = () => {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    document.getElementById('inputDaily').value = `${yyyy}-${mm}-${dd}`;
+    executeSearch();
+  };
 </script>
 </body>
 </html>
